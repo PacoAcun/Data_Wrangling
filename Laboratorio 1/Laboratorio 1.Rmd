@@ -1,0 +1,104 @@
+---
+title: "Laboratorio 1"
+author: "Francisco Acuña"
+date: "2024-08-01"
+output: github_document
+---
+
+## Introducción
+
+Este documento describe el proceso de unificación de archivos de Excel proporcionados por una embotelladora nacional. Los archivos contienen información de las entregas realizadas durante el año 2023. El objetivo es unificar todos los archivos en una sola tabla, agregar una columna que identifique el mes y el año de cada archivo, y exportar la tabla unificada en formato CSV y Excel.
+
+```{r}
+knitr::opts_chunk$set(echo = TRUE)
+# Cargar las librerías necesarias
+library(readr)
+library(readxl)
+library(openxlsx)
+library(dplyr)
+```
+
+```{r}
+# Definir la ruta de los archivos (misma ruta que el archivo .Rmd)
+ruta_archivos <- "."  # El punto indica la ruta actual
+
+# Listar archivos en la ruta para verificar
+rutas_archivos <- list.files(path = ruta_archivos, pattern = "\\.xlsx$")
+
+# Leer todos los archivos de Excel y unificarlos en una sola tabla
+datos_unificados <- lapply(rutas_archivos, function(ruta) {
+  # Leer el archivo de Excel
+  archivo <- read_excel(ruta)
+  
+  # Extraer el nombre del archivo para obtener la fecha
+  nombre_archivo <- basename(ruta)
+  fecha_archivo <- sub("(.*)\\.xlsx", "\\1", nombre_archivo)
+  
+  # Agregar la columna Fecha
+  archivo$Fecha <- fecha_archivo
+  
+  return(archivo)
+}) %>% bind_rows()
+```
+
+```{r}
+# Mostrar los primeros registros de datos_unificados para verificar
+head(datos_unificados)
+
+# Seleccionar las columnas necesarias
+datos_unificados <- datos_unificados %>%
+  select(COD_VIAJE, CLIENTE, UBICACION, CANTIDAD, PILOTO, Q, CREDITO, UNIDAD, Fecha)
+
+# Mostrar los primeros registros de datos_unificados para verificar
+head(datos_unificados)
+```
+
+```{r}
+# Exportar el archivo unificado a CSV
+write.csv(datos_unificados, file.path(ruta_archivos, "datos_unificados.csv"), row.names = FALSE)
+
+# Exportar el archivo unificado a Excel
+write.xlsx(datos_unificados, file.path(ruta_archivos, "datos_unificados.xlsx"))
+```
+
+```{r}
+## Problema 2: Encontrar la Moda
+# Función para calcular la moda
+calcular_moda <- function(vector) {
+  tabla_frecuencias <- table(vector)
+  moda <- names(tabla_frecuencias[tabla_frecuencias == max(tabla_frecuencias)])
+  as.numeric(moda)
+}
+
+# Crear una lista de vectores
+lista_vectores <- list(
+  c(1, 2, 2, 3, 4),
+  c(5, 5, 6, 6, 6, 7, 8),
+  c(10, 10, 11, 12, 12, 12, 12)
+)
+
+# Utilizar lapply para encontrar la moda de cada vector en la lista
+modas <- lapply(lista_vectores, calcular_moda)
+
+# Convertir la lista de modas en un data frame para una presentación más clara
+modas_df <- data.frame(
+  Vector = paste0("Vector ", seq_along(modas)),
+  Moda = unlist(modas)
+)
+
+# Mostrar el data frame de modas
+modas_df
+```
+
+```{r}
+# Leer el archivo de texto INE_PARQUE_VEHICULAR_080219.txt
+ruta_txt <- "INE_PARQUE_VEHICULAR_080219.txt"
+datos_txt <- read_delim(ruta_txt, delim = "|")
+
+# Mostrar los primeros registros del archivo de texto
+head(datos_txt)
+
+# Obtener la estructura del archivo de texto
+str(datos_txt)
+```
+
