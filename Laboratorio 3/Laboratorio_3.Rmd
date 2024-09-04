@@ -1,0 +1,178 @@
+---
+title: "Laboratorio 3"
+author: "Francisco Acuña"
+date: "2024-09-04"
+output: github_document
+---
+
+```{r}
+library(dplyr)
+```
+
+# Carga de Datos
+
+```{r}
+actors <- read.csv("actors.csv")
+directors_genres <- read.csv("directors_genres.csv")
+directors <- read.csv("directors.csv")
+movies_directors <- read.csv("movies_directors.csv")
+movies <- read.csv("movies.csv")
+roles <- read.csv("roles.csv")
+```
+
+# 1.	Base de datos:
+## a. ¿Cuál es el número total de películas registradas?
+
+```{r}
+total_peliculas <- nrow(movies)
+total_peliculas
+
+```
+
+## b. ¿Cuántos directores únicos hay en la base de datos?
+
+```{r}
+total_directores <- directors %>% 
+  distinct(id) %>% 
+  nrow()
+
+total_directores
+```
+
+# 2. ¿Cuál es el promedio de géneros por cada director?
+
+```{r}
+promedio_generos_director <- directors_genres %>%
+  group_by(director_id) %>%
+  summarise(total_generos = n_distinct(genre)) %>%
+  summarise(promedio_generos = mean(total_generos))
+
+promedio_generos_director
+```
+# 3. Generar un informe basado en "Role" que incluya:
+
+## a. Número de películas asociadas a cada rol
+
+```{r}
+peliculas_por_rol <- roles %>%
+  group_by(role) %>%
+  summarise(cantidad_peliculas = n_distinct(movie_id))
+
+head(peliculas_por_rol,10)
+```
+
+## b.	Número de actores distintos por rol
+
+```{r}
+actores_por_rol <- roles %>%
+  group_by(role) %>%
+  summarise(total_actores = n_distinct(actor_id))
+
+head(actores_por_rol,10)
+```
+
+## c.	Número de actrices por rol
+
+```{r}
+actrices_por_rol <- roles %>%
+  inner_join(actors %>% filter(gender == 'F'), by = c("actor_id" = "id")) %>%
+  group_by(role) %>%
+  summarise(total_actrices = n_distinct(actor_id))
+
+head(actrices_por_rol,10)
+```
+
+## d.	Cantidad de directores por rol
+
+```{r}
+directores_por_rol <- movies_directors %>%
+  inner_join(roles, by = "movie_id") %>%  
+  group_by(role) %>%
+  summarise(total_directores = n_distinct(director_id))
+
+head(directores_por_rol,10)
+```
+
+# 4. Crear un nuevo informe con la siguiente información:
+
+## a. Detalles del director (ID, nombre, apellido)
+
+```{r}
+info_directores <- directors %>%
+  select(director_id = id, nombre = first_name, apellido = last_name)
+
+head(info_directores,10)
+```
+
+## b. Contar cuántas películas ha dirigido cada director
+
+```{r}
+peliculas_dirigidas <- movies_directors %>%
+  group_by(director_id) %>%
+  summarise(total_peliculas = n_distinct(movie_id))
+
+info_directores_completa <- info_directores %>%
+  left_join(peliculas_dirigidas, by = "director_id")
+
+head(info_directores_completa,10)
+```
+
+## c. ¿Cuántos actores han trabajado con cada director?
+
+```{r}
+actores_por_director <- movies_directors %>%
+  inner_join(roles, by = "movie_id") %>% 
+  group_by(director_id) %>% 
+  summarise(total_actores = n_distinct(actor_id)) 
+
+info_actores_por_director <- actores_por_director %>%
+  inner_join(info_directores, by = "director_id")  
+
+head(info_actores_por_director,10)
+```
+
+## d. ¿Cuál es el género más común en las películas de cada director?
+
+```{r}
+genero_mas_comun_director <- directors_genres %>%
+  inner_join(movies_directors, by = "director_id") %>%  
+  group_by(director_id, genre) %>%  
+  summarise(apariciones = n()) %>% 
+  slice_max(apariciones, with_ties = FALSE) %>%  
+  ungroup()
+
+info_genero_mas_comun <- genero_mas_comun_director %>%
+  inner_join(info_directores, by = "director_id") %>%  
+  select(director_id, nombre, apellido, genre)  
+
+head(info_genero_mas_comun,10)
+```
+
+# 5. Analizar la distribución de “Roles” según las siguientes dimensiones:
+
+## a.	Distribución por película
+
+```{r}
+distribucion_roles_pelicula <- roles %>% 
+  group_by(movie_id) %>% 
+  summarise(cantidad_roles = n_distinct(role)) %>% 
+  group_by(cantidad_roles) %>% 
+  summarise(cantidad_peliculas = n()) %>% 
+  arrange(cantidad_roles)
+
+head(distribucion_roles_pelicula,10)
+```
+
+## b.	Distribución por director
+
+```{r}
+distribucion_roles_director <- movies_directors %>% 
+  inner_join(roles, by = "movie_id") %>% 
+  group_by(director_id) %>%  
+  summarise(cantidad_roles = n_distinct(role)) %>%  
+  group_by(cantidad_roles) %>% 
+  summarise(cantidad_directores = n()) %>%  
+  arrange(cantidad_roles)
+
+head(distribucion_roles_director,10)
+```
