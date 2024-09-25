@@ -120,7 +120,7 @@ paste0("Mis preguntas a resolver son: ",paste0(preguntas,collapse = ", "))
     - `df[df$variable == "valor",]`
 
 R/.  
-\* library(dplyr) \* df %\>% \* select(a, b)
+`library(dplyr)` `df %>%` `select(a, b)`
 
 4.  ¿Cuál es la diferencia entre utilizar `==` y `=` en R?
 
