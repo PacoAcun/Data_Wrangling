@@ -177,13 +177,13 @@ territorio_rentabilidad <- data %>%
   group_by(Territorio, Pais) %>%
   summarize(total_unidades = sum(Unidades_plaza, na.rm = TRUE),
             total_venta = sum(Venta, na.rm = TRUE),
-            perdida = sum(Venta[Venta < 0], na.rm = TRUE),  # Sumar solo las pérdidas
+            perdida = sum(Venta[Venta < 0], na.rm = TRUE), 
             .groups = 'drop') %>%
   mutate(precio_unitario = ifelse(total_unidades > 0, total_venta / total_unidades, NA))
 
 territorios_con_perdidas <- territorio_rentabilidad %>%
   filter(perdida < 0) %>%
-  arrange(desc(perdida))
+  arrange(perdida)
 
 print("Territorios con pérdidas:")
 print(territorios_con_perdidas)

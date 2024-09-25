@@ -241,13 +241,13 @@ territorio_rentabilidad <- data %>%
   group_by(Territorio, Pais) %>%
   summarize(total_unidades = sum(Unidades_plaza, na.rm = TRUE),
             total_venta = sum(Venta, na.rm = TRUE),
-            perdida = sum(Venta[Venta < 0], na.rm = TRUE),  # Sumar solo las pérdidas
+            perdida = sum(Venta[Venta < 0], na.rm = TRUE), 
             .groups = 'drop') %>%
   mutate(precio_unitario = ifelse(total_unidades > 0, total_venta / total_unidades, NA))
 
 territorios_con_perdidas <- territorio_rentabilidad %>%
   filter(perdida < 0) %>%
-  arrange(desc(perdida))
+  arrange(perdida)
 
 print("Territorios con pérdidas:")
 ```
@@ -261,16 +261,16 @@ print(territorios_con_perdidas)
     ## # A tibble: 79 × 6
     ##    Territorio Pais     total_unidades total_venta perdida precio_unitario
     ##    <chr>      <chr>             <dbl>       <dbl>   <dbl>           <dbl>
-    ##  1 0bfe69a0   4f03bd9b             58        384.   -5.56            6.63
-    ##  2 9de43341   4f03bd9b            449       3095.  -13.8             6.89
-    ##  3 0f915ffc   4f03bd9b            381       3260.  -14.4             8.56
-    ##  4 b53a9360   4f03bd9b           1100       8074.  -18.9             7.34
-    ##  5 c300284d   4f03bd9b            570       4007.  -20.9             7.03
-    ##  6 11676773   4f03bd9b           1253      12754.  -27.1            10.2 
-    ##  7 0320288f   4f03bd9b            113        845.  -33.6             7.48
-    ##  8 c072f75a   4f03bd9b            899       6216.  -35.3             6.91
-    ##  9 6c8335a4   4f03bd9b            578       3594.  -39.9             6.22
-    ## 10 4f860572   4f03bd9b            498       5263.  -40.7            10.6 
+    ##  1 f7dfc635   4046ee34          73483     916786. -14985.           12.5 
+    ##  2 77192d63   4046ee34          20702     247252   -5641.           11.9 
+    ##  3 72520ba2   4f03bd9b          42957     356377.  -3761.            8.30
+    ##  4 69c1b705   4046ee34          11988     152545.  -3370.           12.7 
+    ##  5 1d407777   4046ee34          16005     204601.  -3300.           12.8 
+    ##  6 bc8e06ed   4046ee34          21130     329853.  -3269.           15.6 
+    ##  7 2e812869   4046ee34          10801     138780.  -3056.           12.8 
+    ##  8 67e9cc18   4046ee34           9710     126771.  -2721.           13.1 
+    ##  9 8f79b7f8   4f03bd9b          10822     114890.  -1858.           10.6 
+    ## 10 a0d39798   4f03bd9b          50681     441722.  -1779.            8.72
     ## # ℹ 69 more rows
 
 Los datos proporcionan una visión clara sobre el rendimiento financiero
