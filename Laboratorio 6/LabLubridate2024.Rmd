@@ -2,7 +2,7 @@
 title: "Lubridate Lab"
 author: "Tepi"
 date: "10/6/2024"
-output: pdf_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -26,17 +26,41 @@ Problema: Convierte las columnas dep_time (hora de salida) y arr_time (hora de l
 
 Ayuda: Investiga la funcion matematica de modulo de r.
 
+```{r}
+flights <- flights %>%
+  mutate(
+    dep_datetime = make_datetime(year, month, day, dep_time %/% 100, dep_time %% 100),
+    arr_datetime = make_datetime(year, month, day, arr_time %/% 100, arr_time %% 100)
+  )
+print(flights %>% select(dep_time, arr_time, dep_datetime, arr_datetime) %>% head())
+```
 
 
 ## Ejercicio 2: Duracion del vuelo
 
 Calcula el tiempo de vuelo total en minutos entre las columnas dep_time y arr_time que calculaste en el primer Ejercicio.
 
+```{r}
+flights <- flights %>%
+  mutate(
+    flight_duration = as.numeric(difftime(arr_datetime, dep_datetime, units = "mins"))
+  )
+print(flights %>% select(dep_datetime, arr_datetime, flight_duration) %>% head())
+```
+
 
 ## Ejercicio 3: Extraer componentes de fechas
 
 Extrae el dia de la semana y la hora en que salieron los aviones y guardalos en las variables `dep_day_of_week` y `dep_hour`.
 
+```{r}
+flights <- flights %>%
+  mutate(
+    dep_day_of_week = wday(dep_datetime, label = TRUE),
+    dep_hour = hour(dep_datetime)
+  )
+print(flights %>% select(dep_datetime, dep_day_of_week, dep_hour) %>% head())
+```
 
 
 ## Ejercicio 4: Crear nuevas columnas con el día de la semana y la semana del año
@@ -45,9 +69,24 @@ Problema: Usando la columna `time_hour`, crea una nueva columna que indique el d
 
 Ayuda: Invesitga la funcion wday de lubridate.
 
+```{r}
+flights <- flights %>%
+  mutate(
+    day_of_week = wday(time_hour, label = TRUE),
+    week_of_year = week(time_hour)
+  )
+print(flights %>% select(time_hour, day_of_week, week_of_year) %>% head())
+```
+
+
 ## Ejercicio 5: Encontrar los vuelos que salieron los fines de semana
 
 Problema: Filtra los vuelos que despegaron un sábado o domingo y devuelve el total de vuelos en fines de semana.
 
+```{r}
+weekend_flights <- flights %>%
+  filter(dep_day_of_week %in% c("Sat", "Sun")) %>%
+  tally()
 
-
+print(weekend_flights)
+```
