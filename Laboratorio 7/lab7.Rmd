@@ -1,0 +1,148 @@
+---
+title: "Lab7"
+author: "Francisco Acuña - 20220565"
+date: "2024-10-21"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(tidyverse)
+library(stringr)
+library(lubridate)
+library(stopwords)
+library(wordcloud)
+library(highcharter)
+library(tm)
+```
+
+```{r}
+Health_and_Personal_Care <- read_csv("Health_and_Personal_Care.csv")
+Health_and_Personal_Care_metadata <- read_csv("Health_and_Personal_Care_metadata.csv")
+```
+
+## 1. Cuántos productos contienen reviews con las palabras “love”, “recommend” y “enjoy”?
+
+```{r}
+productos_filtrados <- Health_and_Personal_Care %>%
+  filter(grepl("love", text, ignore.case = TRUE) &
+           grepl("recommend", text, ignore.case = TRUE) &
+           grepl("enjoy", text, ignore.case = TRUE)) %>%
+  distinct(product_id, .keep_all = TRUE)
+
+cat("Cantidad de filas con productos distintos que contienen 'love', 'recommend' y 'enjoy':", nrow(productos_filtrados), "\n")
+```
+
+## 2. De los reviews de la pregunta 1, encuentre el top 5 de las tiendas que los venden
+
+```{r}
+productos_con_tiendas <- productos_filtrados %>%
+  left_join(Health_and_Personal_Care_metadata, by = "parent_id")
+
+top_5_tiendas <- productos_con_tiendas %>%
+  group_by(store) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(5)
+
+cat("Top 5 de tiendas antes de la limpieza: \n")
+print(top_5_tiendas)
+
+productos_con_tiendas_limpio <- productos_con_tiendas %>%
+  mutate(store = str_trim(store)) %>%
+  filter(store != "",
+         store != "n/a",
+         nchar(store) > 0) %>%
+  mutate(store = tolower(store))
+
+top_5_tiendas_limpio <- productos_con_tiendas_limpio %>%
+  group_by(store) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count)) %>%
+  head(5)
+
+cat("Top 5 de tiendas después de la limpieza: \n")
+print(top_5_tiendas_limpio)
+```
+
+## 3. Generar un wordcloud sin stopwords de los reviews de la pregunta 1
+
+```{r}
+reviews_text <- productos_filtrados$text
+
+corpus <- Corpus(VectorSource(reviews_text))
+
+corpus <- corpus %>%
+  tm_map(content_transformer(tolower)) %>%
+  tm_map(removePunctuation) %>%
+  tm_map(removeNumbers) %>%
+  tm_map(removeWords, stopwords("en"))
+
+dtm <- TermDocumentMatrix(corpus)
+matrix <- as.matrix(dtm)
+
+word_freqs <- sort(rowSums(matrix), decreasing = TRUE)
+
+
+df_words <- data.frame(word = names(word_freqs), freq = word_freqs)
+
+set.seed(1234)  # Para reproducibilidad
+wordcloud(words = df_words$word, freq = df_words$freq, min.freq = 2,
+          max.words = 100, random.order = FALSE, colors = brewer.pal(8, "Dark2"))
+```
+
+## 4. Generar un wordcloud de los reviews de las 5 tiendas encontradas en la pregunta 2
+
+```{r}
+top_5_tiendas_limpio_names <- top_5_tiendas_limpio$store
+
+reviews_top_5_tiendas <- productos_con_tiendas_limpio %>%
+  filter(store %in% top_5_tiendas_limpio_names)
+
+reviews_text_top_5 <- reviews_top_5_tiendas$text
+
+corpus_top_5 <- Corpus(VectorSource(reviews_text_top_5))
+
+corpus_top_5 <- corpus_top_5 %>%
+  tm_map(content_transformer(tolower)) %>%
+  tm_map(removePunctuation) %>%
+  tm_map(removeNumbers) %>%
+  tm_map(removeWords, stopwords("en"))
+
+dtm_top_5 <- TermDocumentMatrix(corpus_top_5)
+matrix_top_5 <- as.matrix(dtm_top_5)
+
+word_freqs_top_5 <- sort(rowSums(matrix_top_5), decreasing = TRUE)
+
+df_words_top_5 <- data.frame(word = names(word_freqs_top_5), freq = word_freqs_top_5)
+
+set.seed(1234)
+wordcloud(words = df_words_top_5$word, freq = df_words_top_5$freq, min.freq = 2,
+          max.words = 100, random.order = FALSE, colors = brewer.pal(8, "Dark2"))
+```
+
+## 5. Cuáles son las 25 palabras más frecuentes de los reviews?
+
+```{r}
+reviews_text <- productos_filtrados$text
+
+corpus <- Corpus(VectorSource(reviews_text))
+
+corpus <- corpus %>%
+  tm_map(content_transformer(tolower)) %>%
+  tm_map(removePunctuation) %>%
+  tm_map(removeNumbers) %>%
+  tm_map(removeWords, stopwords("en"))
+
+dtm <- TermDocumentMatrix(corpus)
+matrix <- as.matrix(dtm)
+
+word_freqs <- sort(rowSums(matrix), decreasing = TRUE)
+
+df_words <- data.frame(word = names(word_freqs), freq = word_freqs)
+
+top_25_words <- head(df_words, 25)
+
+print(top_25_words)
+```
+
